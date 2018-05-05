@@ -4,19 +4,30 @@ import curses
 # Disclaimer: curses part was taken from https://gist.github.com/claymcleod/b670285f334acd56ad1c
 from geometry_msgs.msg import Twist
 
+# Variables:
 node_name = "key"
 publish_topic = "/turtle1/cmd_vel"
 
-cmd = Twist()
+
 class Node:
+    """
+    This is a main node, which will publish velocity commands
+    """
     def __init__(self):
-        self.n = rospy.init_node(name=node_name)
+        rospy.init_node(name=node_name)
         self.p = rospy.Publisher(name=publish_topic, data_class=Twist, queue_size=10)
 
 
 def display(stdscr):
-    global n
-    k = 0
+    """
+    This is the main function which is executed repeatedly.
+
+    """
+    global n  # We need the node handler to publish messages
+
+    k = 0 # initial keypress
+
+    # Initializing curses interface
     stdscr.clear()
     stdscr.refresh()
     curses.start_color()
@@ -24,12 +35,15 @@ def display(stdscr):
     curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
-    while k != ord('q'):
-        # Initialization
+    while k != ord('q'):   # Q key stops the node
+        # Cleaning the screen and getting size
         stdscr.clear()
         height, width = stdscr.getmaxyx()
 
+        # Creating a velocity command message
         cmd = Twist()
+
+        # Updating command according to key pressed
         if k == 119:  # W key
             cmd.linear.x = 1
             key = 'W'
@@ -44,8 +58,12 @@ def display(stdscr):
             key = 'D'
         else:
             key = 'something else...'
+
+        # Publishing the command
         n.p.publish(cmd)
 
+
+        # Curses user interface text
         title = "Turtlebot Control Node"[:width-1]
         subtitle = "Home Assignment in Intelligent Robotic Systems Course"[:width-1]
         keystr = ("Last key pressed: "+key)[:width-1]
@@ -93,9 +111,13 @@ def display(stdscr):
 
 
 if __name__ == '__main__':
+    # This executes on node run
     try:
+        # Creating node
         global n
         n = Node()
+
+        # Starting curses
         curses.wrapper(display)
     except rospy.ROSInterruptException:
         pass
