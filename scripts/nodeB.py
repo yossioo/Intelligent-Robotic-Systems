@@ -2,9 +2,9 @@
 import rospy
 from std_msgs.msg import String
 
-node_name = "nodeA"
-listen_topic = "pong"
-publish_topic = "ping"
+node_name = "nodeB"
+listen_topic = "ping"
+publish_topic = "pong"
 
 
 class DummyNode:
@@ -12,7 +12,6 @@ class DummyNode:
         self.n = rospy.init_node(name=node_name)
         self.p = rospy.Publisher(name=publish_topic, data_class=String, queue_size=10)
         self.ns = rospy.get_namespace()
-        self.r = rospy.Rate(1)
 
         rospy.Subscriber(name=listen_topic,data_class=String, callback=self.woof)
 
@@ -24,16 +23,17 @@ class DummyNode:
         :return:
         :rtype:
         """
-        print("Received on [/{}]:".format(listen_topic))
+        # print("Received on [/{}]:".format(listen_topic))
         print(data.data)
-        # self.r.sleep()
-        rospy.sleep(5)
-        print("Sending to [/{}]".format(publish_topic))
+        rospy.sleep(1)
+        # print("Sending to [/{}]".format(publish_topic))
         self.p.publish(data)
 
 
 def main():
-    DummyNode()
+    n = DummyNode()
+    rospy.sleep(1)
+    n.p.publish(String(data="--pong--"))
     rospy.spin()
 
 
