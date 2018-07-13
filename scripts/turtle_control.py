@@ -4,7 +4,7 @@ from numpy import linalg as LA
 
 import rospy
 # Disclaimer: curses part was taken from https://gist.github.com/claymcleod/b670285f334acd56ad1c
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
 
@@ -12,6 +12,7 @@ from tf.transformations import euler_from_quaternion
 node_name = "burger_controller"
 velocity_topic = "/cmd_vel"
 odom_topic = "/odom"
+simple_goal_topic = "/move_base_simple/goal"
 
 global odom
 
@@ -23,6 +24,7 @@ class Node:
     def __init__(self):
         rospy.init_node(name=node_name)
         self.p_vel = rospy.Publisher(name=velocity_topic, data_class=Twist, queue_size=10)
+        self.p_goal = rospy.Publisher(name=simple_goal_topic, data_class=PoseStamped, queue_size=10)
         rospy.Subscriber(name=odom_topic, data_class=Odometry, callback=callback_odometry)
 
 
@@ -38,13 +40,18 @@ def main():
         if key == 'd' or key == 'D':
             dist = float(raw_input("Enter distance to drive straight: "))
             drive_straight(dist)
+
+        if key == 'p' or key == 'P':
+            x = float(raw_input("Enter coordinate X:"))
+            y = float(raw_input("Enter coordinate Y:"))
+            go_to(x,y)
         
         if key == 'q' or key == 'Q':
             break
     
     
 def print_menu():
-    print("""For distance control press D
+    print("""\n\nFor distance control press D
     For angle control press A
     For position control press P
         To exit press Q""")
@@ -72,13 +79,24 @@ def turn_by_angle(angle_deg):
             (odom.orientation.x, odom.orientation.y, odom.orientation.z, odom.orientation.w))[2] / math.pi
         diff = new_angle - heading
         print(diff)
-        cmd.angular.z = 0.01*diff
+        cmd.angular.z = 0.03*diff
         n.p_vel.publish(cmd)
         R.sleep()
 
     cmd.angular.z = 0
     n.p_vel.publish(cmd)
     print("Arrived.")
+
+def go_to(x,y):
+    pose_goal = PoseStamped()
+    pose_goal.header.frame_id = 'map'
+    pose_goal.pose.position.x = x
+    pose_goal.pose.position.y = y
+    pose_goal.pose.orientation.w = 1
+    n.p_goal.publish(pose_goal)
+    print("Going to the target position")
+
+
 
 def drive_straight(distance):
     global odom
@@ -90,7 +108,7 @@ def drive_straight(distance):
     dist = 1
     cmd = Twist()
     R = rospy.Rate(20)
-    while dist > 0.05:
+    while dist > distance*0.05:
         dist = LA.norm([odom.position.x - new_position[0], odom.position.y - new_position[1]])
         print(dist)
         cmd.linear.x = 0.1
