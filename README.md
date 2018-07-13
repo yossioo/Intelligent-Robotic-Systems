@@ -8,3 +8,9 @@ The homework consists of 2 parts:
   * Any `String` message that will be published to one of the topics will enter the exchange.
 * `key` node that listens to the keyboard and sends command velocity to `/turtle1/cmd_vel` topic.  
 
+
+
+## Homework 4 - ROS part II
+
+Simple textual interface is used to allow user to drive the turtlebot for specific distance  or or rotate in place, as well to drive to a given location in a given map.
+
